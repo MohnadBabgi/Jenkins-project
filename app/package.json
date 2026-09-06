@@ -1,0 +1,17 @@
+{
+  "name": "devops-status-app",
+  "version": "0.1.0",
+  "description": "Tiny status page app for learning a Docker/Jenkins/Kubernetes pipeline",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}
