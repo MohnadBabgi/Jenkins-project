@@ -50,3 +50,14 @@ dd {
   margin: 0;
   text-align: right;
 }
+
+.hint {
+  margin: 1.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.hint code {
+  color: var(--accent);
+}
