@@ -1,8 +1,16 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const os = require('node:os');
+const path = require('node:path');
+const fs = require('node:fs');
 const request = require('supertest');
 const { createApp } = require('../server');
+
+let tempPathCounter = 0;
+function tempHistoryPath() {
+  tempPathCounter += 1;
+  return path.join(os.tmpdir(), `deploy-history-test-${process.pid}-${tempPathCounter}.json`);
+}
 
 test('GET / serves the static html shell', async () => {
   const app = createApp({ version: '1.2.3' });
@@ -39,4 +47,68 @@ test('GET /api/status returns a numeric uptime and an ISO timestamp', async () =
   const res = await request(app).get('/api/status');
   assert.equal(typeof res.body.uptime, 'number');
   assert.match(res.body.now, /^\d{4}-\d{2}-\d{2}T/);
+});
+
+test('GET /api/status returns the injected commit and build number', async () => {
+  const app = createApp({ version: '1.2.3', commit: 'abc1234', buildNumber: '42', historyFilePath: tempHistoryPath() });
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.commit, 'abc1234');
+  assert.equal(res.body.buildNumber, '42');
+});
+
+test('GET /api/status defaults commit/buildNumber to local/dev when not provided', async () => {
+  const app = createApp({ version: '1.2.3', historyFilePath: tempHistoryPath() });
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.commit, 'local');
+  assert.equal(res.body.buildNumber, 'dev');
+});
+
+test('GET /api/status counts how many times the page has been requested', async () => {
+  const app = createApp({ version: '1.2.3', historyFilePath: tempHistoryPath() });
+  await request(app).get('/');
+  await request(app).get('/');
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.requestCount, 2);
+});
+
+test('GET /api/status is not itself counted as a page request', async () => {
+  const app = createApp({ version: '1.2.3', historyFilePath: tempHistoryPath() });
+  await request(app).get('/api/status');
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.requestCount, 0);
+});
+
+test('deploy history records the current deploy on startup', async () => {
+  const historyFilePath = tempHistoryPath();
+  const app = createApp({ version: '1.0.0', commit: 'aaa111', buildNumber: '10', historyFilePath });
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.deployHistory.length, 1);
+  assert.equal(res.body.deployHistory[0].commit, 'aaa111');
+  assert.equal(res.body.deployHistory[0].buildNumber, '10');
+  assert.match(res.body.deployHistory[0].startedAt, /^\d{4}-\d{2}-\d{2}T/);
+  fs.rmSync(historyFilePath, { force: true });
+});
+
+test('deploy history persists and appends across restarts of the process', async () => {
+  const historyFilePath = tempHistoryPath();
+  createApp({ version: '1.0.0', commit: 'aaa111', buildNumber: '10', historyFilePath });
+  const secondDeploy = createApp({ version: '1.0.1', commit: 'bbb222', buildNumber: '11', historyFilePath });
+  const res = await request(secondDeploy).get('/api/status');
+  assert.equal(res.body.deployHistory.length, 2);
+  assert.equal(res.body.deployHistory[0].commit, 'aaa111');
+  assert.equal(res.body.deployHistory[1].commit, 'bbb222');
+  fs.rmSync(historyFilePath, { force: true });
+});
+
+test('deploy history caps at the 10 most recent entries', async () => {
+  const historyFilePath = tempHistoryPath();
+  for (let i = 0; i < 12; i += 1) {
+    createApp({ version: '1.0.0', commit: `sha${i}`, buildNumber: String(i), historyFilePath });
+  }
+  const res = await request(
+    createApp({ version: '1.0.0', commit: 'shaFinal', buildNumber: '99', historyFilePath })
+  ).get('/api/status');
+  assert.equal(res.body.deployHistory.length, 10);
+  assert.equal(res.body.deployHistory[9].commit, 'shaFinal');
+  fs.rmSync(historyFilePath, { force: true });
 });

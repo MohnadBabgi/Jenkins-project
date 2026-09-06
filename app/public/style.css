@@ -61,3 +61,24 @@ dd {
 .hint code {
   color: var(--accent);
 }
+
+h2 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+#deploy-history {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--text);
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+#deploy-history li {
+  margin-bottom: 0.25rem;
+}

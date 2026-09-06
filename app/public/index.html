@@ -12,9 +12,16 @@
     <dl id="status">
       <dt>Hostname</dt><dd data-field="hostname">loading…</dd>
       <dt>Version</dt><dd data-field="version">loading…</dd>
+      <dt>Commit</dt><dd data-field="commit">loading…</dd>
+      <dt>Build</dt><dd data-field="buildNumber">loading…</dd>
       <dt>Server time</dt><dd data-field="now">loading…</dd>
       <dt>Uptime (s)</dt><dd data-field="uptime">loading…</dd>
+      <dt>Requests served</dt><dd data-field="requestCount">loading…</dd>
     </dl>
+
+    <h2>Deploy history</h2>
+    <ol id="deploy-history"></ol>
+
     <p class="hint">refreshes every 5s from <code>/api/status</code></p>
   </main>
   <script src="/app.js"></script>

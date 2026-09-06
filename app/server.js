@@ -1,10 +1,53 @@
 const path = require('node:path');
 const os = require('node:os');
+const fs = require('node:fs');
 const express = require('express');
 
-function createApp({ version } = {}) {
+const MAX_HISTORY_ENTRIES = 10;
+
+function loadDeployHistory(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+function saveDeployHistory(filePath, history) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(history, null, 2));
+}
+
+function recordDeploy(filePath, entry) {
+  const history = loadDeployHistory(filePath);
+  history.push(entry);
+  const trimmed = history.slice(-MAX_HISTORY_ENTRIES);
+  saveDeployHistory(filePath, trimmed);
+  return trimmed;
+}
+
+function createApp({ version, commit, buildNumber, historyFilePath } = {}) {
   const app = express();
   const appVersion = version || process.env.APP_VERSION || '0.0.0';
+  const appCommit = commit || process.env.GIT_COMMIT || 'local';
+  const appBuildNumber = buildNumber || process.env.BUILD_NUMBER || 'dev';
+  const historyPath = historyFilePath
+    || process.env.DEPLOY_HISTORY_PATH
+    || path.join(__dirname, 'data', 'deploy-history.json');
+
+  const deployHistory = recordDeploy(historyPath, {
+    version: appVersion,
+    commit: appCommit,
+    buildNumber: appBuildNumber,
+    startedAt: new Date().toISOString(),
+  });
+
+  let requestCount = 0;
+
+  app.use((req, res, next) => {
+    if (req.path === '/') requestCount += 1;
+    next();
+  });
 
   app.get('/health', (req, res) => {
     res.type('text').send('ok');
@@ -16,6 +59,10 @@ function createApp({ version } = {}) {
       uptime: Math.floor(process.uptime()),
       now: new Date().toISOString(),
       version: appVersion,
+      commit: appCommit,
+      buildNumber: appBuildNumber,
+      requestCount,
+      deployHistory,
     });
   });
 
