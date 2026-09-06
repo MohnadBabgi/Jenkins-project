@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-status-app
+  labels:
+    app: devops-status-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-status-app
+  template:
+    metadata:
+      labels:
+        app: devops-status-app
+    spec:
+      containers:
+        - name: devops-status-app
+          image: muhnnad/devops-status-app:0.4.0
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GIT_COMMIT
+              value: "manual-deploy"
+            - name: BUILD_NUMBER
+              value: "manual"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: deploy-history
+              mountPath: /data
+      volumes:
+        - name: deploy-history
+          persistentVolumeClaim:
+            claimName: devops-status-history-pvc
