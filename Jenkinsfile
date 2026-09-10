@@ -18,6 +18,12 @@ pipeline {
         stage('Build') {
             steps {
                 dir('app') {
+                    script {
+                        env.APP_VERSION = sh(
+                            script: "grep -m1 '\"version\"' package.json | sed -E 's/.*\"version\": *\"([^\"]+)\".*/\\1/'",
+                            returnStdout: true
+                        ).trim()
+                    }
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
@@ -33,7 +39,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh "kubectl set image deployment/devops-status-app devops-status-app=${IMAGE_NAME}:${IMAGE_TAG}"
-                sh "kubectl set env deployment/devops-status-app GIT_COMMIT=${env.GIT_COMMIT.take(7)} BUILD_NUMBER=${env.BUILD_NUMBER}"
+                sh "kubectl set env deployment/devops-status-app GIT_COMMIT=${env.GIT_COMMIT.take(7)} BUILD_NUMBER=${env.BUILD_NUMBER} APP_VERSION=${env.APP_VERSION}"
                 sh "kubectl rollout status deployment/devops-status-app --timeout=90s"
             }
         }
