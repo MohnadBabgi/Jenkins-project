@@ -39,7 +39,12 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh "kubectl set image deployment/devops-status-app devops-status-app=${IMAGE_NAME}:${IMAGE_TAG}"
-                sh "kubectl set env deployment/devops-status-app GIT_COMMIT=${env.GIT_COMMIT.take(7)} BUILD_NUMBER=${env.BUILD_NUMBER} APP_VERSION=${env.APP_VERSION}"
+                sh """kubectl set env deployment/devops-status-app \
+                    GIT_COMMIT=${env.GIT_COMMIT.take(7)} \
+                    BUILD_NUMBER=${env.BUILD_NUMBER} \
+                    APP_VERSION=${env.APP_VERSION} \
+                    REPO_URL='${env.GIT_URL}' \
+                    BUILD_URL='${env.BUILD_URL}'"""
                 sh "kubectl rollout status deployment/devops-status-app --timeout=90s"
             }
         }

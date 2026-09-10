@@ -112,3 +112,51 @@ test('deploy history caps at the 10 most recent entries', async () => {
   assert.equal(res.body.deployHistory[9].commit, 'shaFinal');
   fs.rmSync(historyFilePath, { force: true });
 });
+
+test('GET /api/status links the commit to the repo, stripping a trailing .git', async () => {
+  const app = createApp({
+    commit: 'abc1234',
+    repoUrl: 'https://github.com/example/project.git',
+    historyFilePath: tempHistoryPath(),
+  });
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.commitUrl, 'https://github.com/example/project/commit/abc1234');
+});
+
+test('GET /api/status passes through the build URL', async () => {
+  const app = createApp({
+    buildUrl: 'http://jenkins.example:8080/job/app/5/',
+    historyFilePath: tempHistoryPath(),
+  });
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.buildUrl, 'http://jenkins.example:8080/job/app/5/');
+});
+
+test('GET /api/status returns null links when repo/build URLs are not configured', async () => {
+  const app = createApp({ historyFilePath: tempHistoryPath() });
+  const res = await request(app).get('/api/status');
+  assert.equal(res.body.commitUrl, null);
+  assert.equal(res.body.buildUrl, null);
+});
+
+test('GET /api/status reports when the current deploy started', async () => {
+  const app = createApp({ historyFilePath: tempHistoryPath() });
+  const res = await request(app).get('/api/status');
+  const latest = res.body.deployHistory[res.body.deployHistory.length - 1];
+  assert.equal(res.body.deployedAt, latest.startedAt);
+});
+
+test('deploy history entries keep their commit and build links', async () => {
+  const historyFilePath = tempHistoryPath();
+  const app = createApp({
+    commit: 'abc1234',
+    repoUrl: 'https://github.com/example/project',
+    buildUrl: 'http://jenkins.example:8080/job/app/5/',
+    historyFilePath,
+  });
+  const res = await request(app).get('/api/status');
+  const entry = res.body.deployHistory[0];
+  assert.equal(entry.commitUrl, 'https://github.com/example/project/commit/abc1234');
+  assert.equal(entry.buildUrl, 'http://jenkins.example:8080/job/app/5/');
+  fs.rmSync(historyFilePath, { force: true });
+});

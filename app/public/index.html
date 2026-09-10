@@ -3,26 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DevOps Status Page</title>
+  <title>Deployment status</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <main class="card">
-    <h1>It's alive</h1>
-    <dl id="status">
-      <dt>Hostname</dt><dd data-field="hostname">loading…</dd>
-      <dt>Version</dt><dd data-field="version">loading…</dd>
-      <dt>Commit</dt><dd data-field="commit">loading…</dd>
-      <dt>Build</dt><dd data-field="buildNumber">loading…</dd>
-      <dt>Server time</dt><dd data-field="now">loading…</dd>
-      <dt>Uptime (s)</dt><dd data-field="uptime">loading…</dd>
-      <dt>Requests served</dt><dd data-field="requestCount">loading…</dd>
-    </dl>
+  <main class="page">
+    <header class="hero">
+      <p class="health" id="health" data-state="checking" role="status">
+        <span class="health-dot" aria-hidden="true"></span>
+        <span class="health-text">Checking health…</span>
+      </p>
+      <h1 class="headline" id="headline">Loading deployment…</h1>
+      <p class="summary" id="summary"></p>
+    </header>
 
-    <h2>Deploy history</h2>
-    <ol id="deploy-history"></ol>
+    <section class="facts" id="status" aria-label="Current deployment">
+      <div class="fact-group">
+        <h2>Deployment</h2>
+        <dl>
+          <dt>Version</dt><dd data-field="version">–</dd>
+          <dt>Commit</dt><dd data-field="commit">–</dd>
+          <dt>Build</dt><dd data-field="buildNumber">–</dd>
+          <dt>Deployed</dt><dd data-field="deployedAt">–</dd>
+        </dl>
+      </div>
+      <div class="fact-group">
+        <h2>Runtime</h2>
+        <dl>
+          <dt>Pod</dt><dd data-field="hostname">–</dd>
+          <dt>Uptime</dt><dd data-field="uptime">–</dd>
+          <dt>Page views since start</dt><dd data-field="requestCount">–</dd>
+        </dl>
+      </div>
+    </section>
 
-    <p class="hint">refreshes every 5s from <code>/api/status</code></p>
+    <section class="history" aria-labelledby="history-heading">
+      <h2 id="history-heading">Deploy history</h2>
+      <ol class="timeline" id="deploy-history"></ol>
+    </section>
+
+    <p class="footnote">Updates every 5 seconds.</p>
   </main>
   <script src="/app.js"></script>
 </body>
