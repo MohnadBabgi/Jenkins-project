@@ -31,12 +31,9 @@
         </dl>
       </div>
       <div class="fact-group">
-        <h2>Runtime</h2>
-        <dl>
-          <dt>Pod</dt><dd data-field="hostname">–</dd>
-          <dt>Uptime</dt><dd data-field="uptime">–</dd>
-          <dt>Page views since start</dt><dd data-field="requestCount">–</dd>
-        </dl>
+        <h2>Pods <span class="pod-count" id="pod-count"></span></h2>
+        <ul class="pods" id="pods"></ul>
+        <p class="pod-note">The Service sends each refresh to one pod, picked at random. A pod is listed once it has answered.</p>
       </div>
     </section>
 

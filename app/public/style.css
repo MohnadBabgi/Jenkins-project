@@ -165,9 +165,88 @@ dd {
   overflow-wrap: anywhere;
 }
 
-[data-field="uptime"],
-[data-field="requestCount"] {
+/* Pods that have answered */
+
+.pod-count {
+  margin-left: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--slate);
+}
+
+.pods {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pod {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+  transition: opacity 0.3s;
+}
+
+.pod.is-stale { opacity: 0.5; }
+
+.pod-name {
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.pod-prefix {
+  font-weight: 400;
+  color: var(--slate);
+}
+
+.pod-meta {
+  margin: 0.1rem 0 0;
+  font-size: 0.875rem;
+  color: var(--slate);
   font-variant-numeric: tabular-nums;
+}
+
+.pod-seen {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--slate);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pod-seen::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.pod.is-stale .pod-seen::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--slate);
+}
+
+.pod.is-serving .pod-seen {
+  font-weight: 500;
+  color: var(--blue);
+}
+
+.pod.is-serving .pod-seen::before { background: var(--blue); }
+
+.pod-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--slate);
 }
 
 /* Deploy history timeline */

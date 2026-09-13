@@ -1,8 +1,14 @@
 const REFRESH_MS = 5000;
+const POD_STALE_MS = 30 * 1000;
+const POD_FORGET_MS = 3 * 60 * 1000;
 const relativeFormat = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 let lastSeenBuild = null;
+
+// Every pod that has answered, keyed by hostname, in the order they first answered.
+const pods = new Map();
+let servingPod = null;
 
 function link(href, content) {
   if (!href || !/^https?:\/\//.test(href)) return content;
@@ -85,9 +91,69 @@ function renderFacts(data) {
   setField('commit', link(data.commitUrl, code(data.commit)));
   setField('buildNumber', link(data.buildUrl, buildLabel(data.buildNumber)));
   setField('deployedAt', dateFormat.format(new Date(data.deployedAt)));
-  setField('hostname', data.hostname);
-  setField('uptime', formatUptime(data.uptime));
-  setField('requestCount', String(data.requestCount));
+}
+
+function rememberPod(data) {
+  pods.set(data.hostname, {
+    buildNumber: data.buildNumber,
+    uptime: data.uptime,
+    requestCount: data.requestCount,
+    seenAt: Date.now(),
+  });
+  servingPod = data.hostname;
+}
+
+// Pod names end in a random 5-character suffix; that's the part worth reading.
+function podName(hostname) {
+  const name = document.createElement('p');
+  name.className = 'pod-name';
+  const match = /^(.+-)([a-z0-9]{5})$/.exec(hostname);
+  if (match) {
+    const prefix = document.createElement('span');
+    prefix.className = 'pod-prefix';
+    prefix.textContent = match[1];
+    name.append(prefix, match[2]);
+  } else {
+    name.textContent = hostname;
+  }
+  return name;
+}
+
+function renderPods() {
+  const now = Date.now();
+  for (const [hostname, pod] of pods) {
+    if (now - pod.seenAt > POD_FORGET_MS) pods.delete(hostname);
+  }
+
+  let answering = 0;
+  const items = [...pods].map(([hostname, pod]) => {
+    const age = now - pod.seenAt;
+    const stale = age > POD_STALE_MS;
+    if (!stale) answering += 1;
+
+    const li = document.createElement('li');
+    li.className = 'pod';
+    if (hostname === servingPod) li.classList.add('is-serving');
+    if (stale) li.classList.add('is-stale');
+
+    const uptime = stale ? pod.uptime : pod.uptime + Math.floor(age / 1000);
+    const views = pod.requestCount === 1 ? '1 page view' : `${pod.requestCount} page views`;
+    const meta = document.createElement('p');
+    meta.className = 'pod-meta';
+    meta.textContent = `${buildLabel(pod.buildNumber)} · up ${formatUptime(uptime)} · ${views}`;
+
+    const seen = document.createElement('p');
+    seen.className = 'pod-seen';
+    if (hostname === servingPod) seen.textContent = 'This refresh';
+    else if (stale) seen.textContent = `No answer for ${formatUptime(Math.floor(age / 1000))}`;
+    else seen.textContent = `${Math.round(age / 1000)}s ago`;
+
+    li.append(podName(hostname), meta, seen);
+    return li;
+  });
+
+  document.getElementById('pods').replaceChildren(...items);
+  document.getElementById('pod-count').textContent = answering ? `${answering} answering` : '';
 }
 
 function renderHistory(history) {
@@ -126,12 +192,15 @@ async function refresh() {
     if (!health.ok || !status.ok) throw new Error('unhealthy');
     const data = await status.json();
     setHealth('healthy', 'Healthy');
+    rememberPod(data);
     renderHero(data);
     renderFacts(data);
     renderHistory(data.deployHistory);
   } catch {
+    servingPod = null;
     setHealth('down', "Can't reach the app. Retrying every 5 seconds.");
   }
+  renderPods();
 }
 
 refresh();

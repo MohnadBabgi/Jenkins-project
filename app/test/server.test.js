@@ -160,3 +160,20 @@ test('deploy history entries keep their commit and build links', async () => {
   assert.equal(entry.buildUrl, 'http://jenkins.example:8080/job/app/5/');
   fs.rmSync(historyFilePath, { force: true });
 });
+
+test('responses close the connection so the k8s Service picks a pod for every request', async () => {
+  const app = createApp({ historyFilePath: tempHistoryPath() });
+  for (const route of ['/api/status', '/health']) {
+    const res = await request(app).get(route).set('Connection', 'keep-alive');
+    assert.equal(res.headers.connection, 'close', route);
+  }
+});
+
+test('deploy history includes deploys recorded later by other pods sharing the file', async () => {
+  const historyFilePath = tempHistoryPath();
+  const firstPod = createApp({ commit: 'aaa111', buildNumber: '10', historyFilePath });
+  createApp({ commit: 'bbb222', buildNumber: '10', historyFilePath });
+  const res = await request(firstPod).get('/api/status');
+  assert.deepEqual(res.body.deployHistory.map((entry) => entry.commit), ['aaa111', 'bbb222']);
+  fs.rmSync(historyFilePath, { force: true });
+});

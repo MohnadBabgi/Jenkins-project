@@ -21,9 +21,7 @@ function saveDeployHistory(filePath, history) {
 function recordDeploy(filePath, entry) {
   const history = loadDeployHistory(filePath);
   history.push(entry);
-  const trimmed = history.slice(-MAX_HISTORY_ENTRIES);
-  saveDeployHistory(filePath, trimmed);
-  return trimmed;
+  saveDeployHistory(filePath, history.slice(-MAX_HISTORY_ENTRIES));
 }
 
 function createApp({ version, commit, buildNumber, repoUrl, buildUrl, historyFilePath } = {}) {
@@ -41,7 +39,7 @@ function createApp({ version, commit, buildNumber, repoUrl, buildUrl, historyFil
     || path.join(__dirname, 'data', 'deploy-history.json');
 
   const deployedAt = new Date().toISOString();
-  const deployHistory = recordDeploy(historyPath, {
+  recordDeploy(historyPath, {
     version: appVersion,
     commit: appCommit,
     buildNumber: appBuildNumber,
@@ -51,6 +49,13 @@ function createApp({ version, commit, buildNumber, repoUrl, buildUrl, historyFil
   });
 
   let requestCount = 0;
+
+  // A k8s Service picks a pod per TCP connection, not per request. Browsers keep
+  // connections alive, so without this every refresh would land on the same pod.
+  app.use((req, res, next) => {
+    res.set('Connection', 'close');
+    next();
+  });
 
   app.use((req, res, next) => {
     if (req.path === '/') requestCount += 1;
@@ -73,7 +78,8 @@ function createApp({ version, commit, buildNumber, repoUrl, buildUrl, historyFil
       buildUrl: appBuildUrl,
       deployedAt,
       requestCount,
-      deployHistory,
+      // Re-read on every request: other replicas append to the same file.
+      deployHistory: loadDeployHistory(historyPath),
     });
   });
 
