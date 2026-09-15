@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-        stag('Build') {
+        stage('Build') {
             steps {
                 dir('app') {
                     script {
