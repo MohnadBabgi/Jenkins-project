@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    tools {
+        nodejs 'node20'
+    }
     environment {
         IMAGE_NAME = 'muhnnad/devops-status-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
