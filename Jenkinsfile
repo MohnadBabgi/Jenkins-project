@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stag('Build') {
             steps {
                 dir('app') {
                     script {
@@ -24,6 +24,8 @@ pipeline {
                             returnStdout: true
                         ).trim()
                     }
+                    sh 'npm ci'
+                    sh 'npm run build --if-present'
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
