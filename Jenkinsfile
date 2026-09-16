@@ -27,7 +27,8 @@ pipeline {
                         ).trim()
                     }
                     sh 'npm ci'
-                    sh 'npm run build --if-present'
+                    sh 'npm test'
+                    sh 'npm run build'
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }

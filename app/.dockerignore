@@ -4,3 +4,7 @@ test
 data
 .git
 .gitignore
+k8s
+
+# Do NOT ignore dist/ - it is built on the Jenkins agent before `docker build`
+# and is the only thing the image actually runs.
