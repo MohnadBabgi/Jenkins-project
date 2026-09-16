@@ -6,6 +6,13 @@ const fs = require('node:fs');
 const request = require('supertest');
 const { createApp } = require('../server');
 
+// Jenkins exports GIT_COMMIT, BUILD_NUMBER and BUILD_URL into every sh step, and
+// createApp falls back to them. Clear them so the tests below assert the real
+// defaults instead of whatever the surrounding CI build happens to inject.
+for (const key of ['APP_VERSION', 'GIT_COMMIT', 'BUILD_NUMBER', 'REPO_URL', 'BUILD_URL']) {
+  delete process.env[key];
+}
+
 let tempPathCounter = 0;
 function tempHistoryPath() {
   tempPathCounter += 1;
