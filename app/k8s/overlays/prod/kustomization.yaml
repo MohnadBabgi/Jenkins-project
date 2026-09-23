@@ -19,4 +19,4 @@ patches:
 # Bumped manually when a build is promoted from staging; not touched by CI.
 images:
   - name: muhnnad/devops-status-app
-    newTag: "24"
+    newTag: "32"
