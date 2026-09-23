@@ -1,6 +1,24 @@
+# Prod runs two replicas, and pins the build metadata for whatever was last
+# promoted here. Promotion = copy these values (and newTag in kustomization.yaml)
+# from the staging overlay, then Sync the prod Application in ArgoCD.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: devops-status-app
 spec:
   replicas: 2
+  template:
+    spec:
+      containers:
+        - name: devops-status-app
+          env:
+            - name: APP_VERSION
+              value: "0.6.0"
+            - name: GIT_COMMIT
+              value: "1763f5b"
+            - name: BUILD_NUMBER
+              value: "24"
+            - name: REPO_URL
+              value: "https://github.com/MohnadBabgi/Jenkins-project.git"
+            - name: BUILD_URL
+              value: "http://129.80.184.164:8080/job/devops-status-app/24/"

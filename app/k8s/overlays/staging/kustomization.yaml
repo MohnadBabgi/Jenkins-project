@@ -7,12 +7,18 @@ resources:
   - ../../base
 
 patches:
+  - path: patch-deployment.yaml
+    target:
+      kind: Deployment
+      name: devops-status-app
   - path: patch-service.yaml
     target:
       kind: Service
       name: devops-status-app
 
 # Bumped manually when a build is promoted from dev; not touched by CI.
+# Must be kept in step with patch-deployment.yaml, or the status page will
+# report a different build than the image actually running.
 images:
   - name: muhnnad/devops-status-app
-    newTag: "0.4.0"
+    newTag: "26"

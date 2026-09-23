@@ -1,0 +1,23 @@
+# Build metadata for the build currently promoted to staging.
+# Promotion = copy these values (and newTag in kustomization.yaml) from the
+# dev overlay, then Sync the staging Application in ArgoCD.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-status-app
+spec:
+  template:
+    spec:
+      containers:
+        - name: devops-status-app
+          env:
+            - name: APP_VERSION
+              value: "0.7.0"
+            - name: GIT_COMMIT
+              value: "6f7e6d0"
+            - name: BUILD_NUMBER
+              value: "26"
+            - name: REPO_URL
+              value: "https://github.com/MohnadBabgi/Jenkins-project.git"
+            - name: BUILD_URL
+              value: "http://129.80.184.164:8080/job/devops-status-app/26/"
