@@ -14,10 +14,10 @@ spec:
             - name: APP_VERSION
               value: "0.7.0"
             - name: GIT_COMMIT
-              value: "f16953f"
+              value: "4168435"
             - name: BUILD_NUMBER
-              value: "28"
+              value: "30"
             - name: REPO_URL
               value: "https://github.com/MohnadBabgi/Jenkins-project.git"
             - name: BUILD_URL
-              value: "http://129.80.184.164:8080/job/devops-status-app/28/"
+              value: "http://129.80.184.164:8080/job/devops-status-app/30/"
