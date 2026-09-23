@@ -17,13 +17,51 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    // The "Update dev manifest" stage below pushes a commit back to main.
-                    // Without this guard that push would trigger another build, which would
-                    // push again, forever. Manifest-only commits are tagged [skip ci].
+                    // Two independent reasons to skip building a new image.
+
+                    // 1. The "Update dev manifest" stage pushes a commit back to main.
+                    //    Without this guard that push triggers another build, which pushes
+                    //    again, forever. Those commits are tagged [skip ci].
                     def lastMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    env.SKIP_BUILD = lastMessage.contains('[skip ci]') ? 'true' : 'false'
-                    if (env.SKIP_BUILD == 'true') {
-                        echo 'Manifest-only commit from a previous build. Nothing to do.'
+                    def isCiCommit = lastMessage.contains('[skip ci]')
+
+                    // 2. Nothing in this push affects the image. Manifest, docs and script
+                    //    changes don't need a rebuild — ArgoCD applies those from Git on its
+                    //    own. Rebuilding would burn a tag and republish identical bytes.
+                    def previous = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: env.GIT_PREVIOUS_COMMIT
+                    def affectsImage = true
+
+                    if (previous && env.GIT_COMMIT) {
+                        def changed = null
+                        try {
+                            changed = sh(
+                                script: "git diff --name-only ${previous} ${env.GIT_COMMIT}",
+                                returnStdout: true
+                            ).trim()
+                        } catch (err) {
+                            echo "Could not diff ${previous}..${env.GIT_COMMIT}; building to be safe."
+                        }
+
+                        if (changed != null) {
+                            def files = changed.split('\n').findAll { it }
+                            // The image is built from app/, minus the manifests under app/k8s/.
+                            // A Jenkinsfile change rebuilds too, so a broken pipeline surfaces now.
+                            affectsImage = files.any { f ->
+                                f == 'Jenkinsfile' || (f.startsWith('app/') && !f.startsWith('app/k8s/'))
+                            }
+                            echo "Changed files since ${previous.take(7)}:\n${files.join('\n')}"
+                        }
+                    } else {
+                        echo 'No previous commit to compare against; building.'
+                    }
+
+                    env.SKIP_BUILD = (isCiCommit || !affectsImage) ? 'true' : 'false'
+
+                    if (isCiCommit) {
+                        echo 'Manifest commit from a previous build. Nothing to do.'
+                    } else if (!affectsImage) {
+                        echo 'No application changes in this push. Keeping the current image; ' +
+                             'ArgoCD will apply any manifest changes on its own.'
                     }
                 }
             }
