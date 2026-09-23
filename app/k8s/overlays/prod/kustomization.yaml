@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: patch-deployment.yaml
+    target:
+      kind: Deployment
+      name: devops-status-app
+  - path: patch-service.yaml
+    target:
+      kind: Service
+      name: devops-status-app
+
+# Bumped manually when a build is promoted from staging; not touched by CI.
+images:
+  - name: muhnnad/devops-status-app
+    newTag: "0.4.0"

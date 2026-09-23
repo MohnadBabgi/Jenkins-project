@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dev
+
+resources:
+  - ../../base
+
+# Dev tracks whatever Jenkins just built on every push to main.
+# No patches needed yet: dev runs identically to base, just in its own namespace.
+images:
+  - name: muhnnad/devops-status-app
+    newTag: "0.4.0"
