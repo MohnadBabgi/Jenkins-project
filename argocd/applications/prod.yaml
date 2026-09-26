@@ -16,8 +16,11 @@ spec:
     namespace: prod
 
   syncPolicy:
-    # No `automated` block: prod is promoted deliberately, same as staging.
-    # Bump the image tag in overlays/prod/kustomization.yaml, then Sync by
-    # hand (UI or `argocd app sync devops-status-app-prod`).
+    # Git is the source of truth. A promotion commit to overlays/prod/ deploys
+    # on its own, and any manual change in the cluster (kubectl scale, edit,
+    # delete) is reverted to match Git within seconds.
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
