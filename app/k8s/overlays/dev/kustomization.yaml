@@ -18,4 +18,4 @@ patches:
 # pipeline's "Update dev manifest" stage, which is what triggers ArgoCD to sync.
 images:
   - name: muhnnad/devops-status-app
-    newTag: "41"
+    newTag: "45"
