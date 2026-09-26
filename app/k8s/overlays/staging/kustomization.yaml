@@ -21,4 +21,4 @@ patches:
 # report a different build than the image actually running.
 images:
   - name: muhnnad/devops-status-app
-    newTag: "36"
+    newTag: "41"
