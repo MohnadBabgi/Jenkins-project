@@ -1,6 +1,6 @@
 {
   "name": "devops-status-app",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "description": "Tiny status page app for learning a Docker/Jenkins/Kubernetes pipeline",
   "main": "server.js",
   "scripts": {
