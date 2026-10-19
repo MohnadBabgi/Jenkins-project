@@ -12,12 +12,12 @@ spec:
         - name: devops-status-app
           env:
             - name: APP_VERSION
-              value: "0.7.8"
+              value: "0.7.9"
             - name: GIT_COMMIT
-              value: "995be7d"
+              value: "f4ad4f0"
             - name: BUILD_NUMBER
-              value: "63"
+              value: "66"
             - name: REPO_URL
               value: "https://github.com/MohnadBabgi/Jenkins-project.git"
             - name: BUILD_URL
-              value: "http://129.80.184.164:8080/job/devops-status-app/63/"
+              value: "http://129.80.184.164:8080/job/devops-status-app/66/"
